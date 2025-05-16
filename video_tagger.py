@@ -196,11 +196,6 @@ def load_labels(label_csv):
     return labels
 
 def main(video_path, labels_csv, output_csv):
-    if output_csv is None:
-        video_dir = os.path.dirname(video_path)
-        video_name = os.path.splitext(os.path.basename(video_path))[0]
-        output_csv = os.path.join(video_dir, f"{video_name}_tagged_points.csv")
-
     labels = load_labels(labels_csv)
     if not labels:
         print("No labels found.")
@@ -221,6 +216,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="GUI tool for tagging video points")
     parser.add_argument("video_path", type=str, help="Path to video file")
     parser.add_argument("labels_csv", type=str, help="CSV with label column")
-    parser.add_argument("--output_csv", type=str, help="Optional output CSV path. Defaults to <video>_tagged_points.csv")
+    parser.add_argument("output_csv", type=str, help="Path to output CSV file")
     args = parser.parse_args()
     main(args.video_path, args.labels_csv, args.output_csv)

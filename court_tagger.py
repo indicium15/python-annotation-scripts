@@ -213,15 +213,8 @@ def main():
     parser = argparse.ArgumentParser(description="Select N court points from video")
     parser.add_argument("num_points", type=int, help="Number of points to tag")
     parser.add_argument("video_path", type=str, help="Path to video file")
-    parser.add_argument("--output_csv", type=str, help="Output CSV path (optional)")
-
+    parser.add_argument("output_csv", type=str, help="Path to output CSV file")
     args = parser.parse_args()
-
-    if args.output_csv is None:
-        video_dir = os.path.dirname(args.video_path)
-        video_name = os.path.splitext(os.path.basename(args.video_path))[0]
-        args.output_csv = os.path.join(video_dir, f"{video_name}_court_points.csv")
-
     CourtSelector(args.video_path, args.num_points, args.output_csv)
 
 
