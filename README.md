@@ -1,0 +1,32 @@
+# Minimalist Annotation Scripts
+
+## Setup
+1. Create a virtual environment and install requirements: `pip install -r requirements.txt`
+
+## Files
+
+### video_tagger.py
+1. Populate the labels.csv with the labels you would like to use for tagging. One row = one label.
+2. Run the script: `python3 video_tagger.py {path_to_video} {path_to_labels.csv} {name_of_output.csv}`
+3. The output csv will contain the following columns:
+    - Frame Number
+    - Label Name
+    - Pixel X Coordinate
+    - Pixel Y Coordinate
+
+### court_tagger.py
+1. Run the script: `python3 court_tagger.py {number_of_points} {path_to_video} {name_of_output.csv}`
+2. The file will display the first frame of the video. To navigate between video frames, use the buttons or left and right arrows.
+3. Click on the points in the video
+4. Double click on the GrX and GrY columns and enter the values you want to use for the ground truth columns
+5. Press "Save and Exit" to create an output `court_points.csv`
+
+### apply_homography.py
+1. Run the script: `python3 apply_homography.py {path_to_original_coords.csv} {path_to_court_points.csv}`
+2. The script will:
+    - Compute a homography matrix from the court-tagged CSV (X, Y → GrX, GrY)
+    - Apply this transformation to all pairs of coordinate columns ending in _x and _y in the original CSV
+    - Save the transformed metric coordinates into new columns named {stem}_x_meters, {stem}_y_meters
+3. A new CSV will be saved with `_homography.csv` appended to the original filename. Example output columns:
+    - `left_wrist_x`, `left_wrist_y` → transformed to `left_wrist_x_meters`, `left_wrist_y_meters`
+    - `right_ankle_x`, `right_ankle_y` → transformed to `right_ankle_x_meters`, `right_ankle_y_meters`
