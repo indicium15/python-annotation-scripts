@@ -27,8 +27,11 @@ class VideoTagger:
         self.duration = self.total_frames / self.fps
 
         self.setup_gui()
+        self._canvas_img_id = None  # Used to store the image ID on the canvas
+        self.root.update_idletasks()
+        self.display_width = self.canvas.winfo_width()
+        self.display_height = self.canvas.winfo_height()
         self.load_frame(self.current_frame_idx)
-
         self.root.bind("<Left>", lambda event: self.prev_frame())
         self.root.bind("<Right>", lambda event: self.next_frame())
 
@@ -91,7 +94,6 @@ class VideoTagger:
         s = int(secs) % 60
         return f"{h:02}:{m:02}:{s:02}"
 
-
     def load_frame(self, frame_idx):
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         ret, frame = self.cap.read()
@@ -105,15 +107,24 @@ class VideoTagger:
 
     def display_frame(self):
         display = self.frame_bgr.copy()
+        self.original_width = display.shape[1]
+        self.original_height = display.shape[0]
+
         for fr, lbl, x, y in self.clicked_points:
             if fr == self.current_frame_idx:
                 cv2.circle(display, (x, y), 4, (0, 255, 0), -1)
                 cv2.putText(display, f"{lbl} - ({x}, {y})", (x + 5, y - 5),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
         display_rgb = cv2.cvtColor(display, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(display_rgb).resize((800, 450))
-        self.tk_img = ImageTk.PhotoImage(img)
-        self.canvas.create_image(0, 0, anchor="nw", image=self.tk_img)
+        resized_img = Image.fromarray(display_rgb).resize((self.display_width, self.display_height))
+        self.tk_img = ImageTk.PhotoImage(resized_img)
+
+        if self._canvas_img_id is None:
+            self._canvas_img_id = self.canvas.create_image(0, 0, anchor="nw", image=self.tk_img)
+        else:
+            self.canvas.itemconfig(self._canvas_img_id, image=self.tk_img)
+
 
     def on_click(self, event):
         x_scale = self.frame_bgr.shape[1] / 800
@@ -139,23 +150,12 @@ class VideoTagger:
         self.update_table()
 
         if self.labels_filled():
-            self.save_current_points()
             self.next_frame()
 
     def labels_filled(self):
         return set(lbl for fr, lbl, _, _ in self.clicked_points if fr == self.current_frame_idx) == set(self.labels)
 
-    def save_current_points(self):
-        os.makedirs(os.path.dirname(self.output_csv) or ".", exist_ok=True)
-        with open(self.output_csv, "a", newline="") as f:
-            writer = csv.writer(f)
-            for fr, lbl, x, y in self.clicked_points:
-                if fr == self.current_frame_idx:
-                    writer.writerow([fr, lbl, x, y])
-        print(f"Auto-saved points for frame {self.current_frame_idx}")
-
     def prev_frame(self):
-        self.save_current_points()
         self.current_frame_idx = max(0, self.current_frame_idx - 1)
         self.slider_programmatic = True
         time_sec = self.current_frame_idx / self.fps
@@ -165,7 +165,6 @@ class VideoTagger:
         self.load_frame(self.current_frame_idx)
 
     def next_frame(self):
-        self.save_current_points()
         self.current_frame_idx = min(self.total_frames - 1, self.current_frame_idx + 1)
         self.slider_programmatic = True
         time_sec = self.current_frame_idx / self.fps
@@ -177,7 +176,6 @@ class VideoTagger:
     def on_slider_move(self, val):
         if self.slider_programmatic:
             return
-        self.save_current_points()
         seconds = float(val)
         self.slider_time_label.config(text=self.seconds_to_hms(seconds))
         self.current_frame_idx = int(seconds * self.fps)
@@ -236,7 +234,20 @@ class VideoTagger:
             self.root.after(int(1000 / self.fps), self.auto_play)
 
     def on_exit(self):
+        # ensure directory exists
+        os.makedirs(os.path.dirname(self.output_csv) or ".", exist_ok=True)
+
+        # write one final CSV with header + all clicks
+        with open(self.output_csv, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["frame", "label", "x", "y"])
+            # sort by frame then label for readability
+            for fr, lbl, x, y in sorted(self.clicked_points, key=lambda t: (t[0], t[1])):
+                writer.writerow([fr, lbl, x, y])
+
+        print(f"Saved {len(self.clicked_points)} clicks to {self.output_csv}")
         self.root.destroy()
+
 
 
 def load_labels(label_csv):
@@ -262,12 +273,6 @@ def main(video_path=None, labels_csv=None, output_csv=None):
         base = os.path.splitext(os.path.basename(video_path))[0]
         directory = os.path.dirname(video_path)
         output_csv = os.path.join(directory, base + "_tagged.csv")
-
-    if os.path.exists(output_csv):
-        os.remove(output_csv)
-    with open(output_csv, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["frame", "label", "x", "y"])
 
     root = tk.Tk()
     root.title("Video Point Tagger")

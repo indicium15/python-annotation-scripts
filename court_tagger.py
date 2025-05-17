@@ -12,7 +12,6 @@ class CourtSelector:
         self.video_path = video_path
         self.num_points = num_points
         self.output_csv = output_csv
-
         self.cap = cv2.VideoCapture(self.video_path)
         if not self.cap.isOpened():
             raise RuntimeError(f"Cannot open video '{self.video_path}'")
@@ -31,8 +30,12 @@ class CourtSelector:
         self.root.bind("<Right>", lambda e: self.next_frame())
 
         self.setup_gui()
+        self.root.update_idletasks()
+        self.display_width = self.canvas.winfo_width()
+        self.display_height = self.canvas.winfo_height()
         self.load_frame()
         self.root.mainloop()
+
 
     def setup_gui(self):
         self.canvas = tk.Canvas(self.root, width=800, height=450)
@@ -90,6 +93,7 @@ class CourtSelector:
         self.update_table()
 
     def display_frame(self):
+        self.canvas.delete("all")  # Clear previous frame (optional but avoids stacking)
         disp = self.frame_bgr.copy()
         for pt in self.points:
             if pt["x"] and pt["y"]:
@@ -98,7 +102,11 @@ class CourtSelector:
                 cv2.putText(disp, f"P{pt['index']}", (x+5,y-5),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
         rgb = cv2.cvtColor(disp, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(rgb).resize((800, 450))
+
+        self.original_width = disp.shape[1]
+        self.original_height = disp.shape[0]
+
+        img = Image.fromarray(rgb).resize((self.display_width, self.display_height))
         self.tk_img = ImageTk.PhotoImage(img)
         self.canvas.create_image(0, 0, anchor="nw", image=self.tk_img)
 
@@ -110,14 +118,20 @@ class CourtSelector:
             self.table.insert("", "end", iid=str(pt["index"]), values=vals)
 
     def on_click(self, event):
-        fx = int(event.x * self.frame_bgr.shape[1]/800)
-        fy = int(event.y * self.frame_bgr.shape[0]/450)
+        # Scale back to original resolution
+        x_scale = self.original_width / self.display_width
+        y_scale = self.original_height / self.display_height
+
+        fx = int(event.x * x_scale)
+        fy = int(event.y * y_scale)
+
         for pt in self.points:
             if not pt["x"] and not pt["y"]:
                 pt["x"], pt["y"] = str(fx), str(fy)
                 break
         self.display_frame()
         self.update_table()
+
 
     def on_table_click(self, event):
         if self.table.identify("region", event.x, event.y) != "cell":
