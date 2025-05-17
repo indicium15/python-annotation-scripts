@@ -7,7 +7,9 @@
 
 ### video_tagger.py
 1. Populate the labels.csv with the labels you would like to use for tagging. One row = one label.
-2. Run the script: `python3 video_tagger.py {path_to_video} {path_to_labels.csv} {name_of_output.csv}`
+2. Run the script:
+    - `python3 video_tagger.py {path_to_video} {path_to_labels.csv} --output_csv {name_of_output.csv (optional)}`
+    - Alternatively, define the variables `VIDEO_PATH`, `LABELS_CSV` and `OUPTUT_CSV` and run `python3 video_tagger.py`
 3. The output csv will contain the following columns:
     - Frame Number
     - Label Name
@@ -15,7 +17,9 @@
     - Pixel Y Coordinate
 
 ### court_tagger.py
-1. Run the script: `python3 court_tagger.py {number_of_points} {path_to_video} {name_of_output.csv}`
+1. Run the script:
+    - `python3 court_tagger.py {number_of_points} {path_to_video} --output_csv {name_of_output.csv (optional)}`
+    - Alternatively, define the variables `VIDEO_PATH`, `NUM_POINTS` and `OUPTUT_CSV` and run `python3 court_tagger.py`
 2. The file will display the first frame of the video. To navigate between video frames, use the buttons or left and right arrows.
 3. Click on the points in the video
 4. Double click on the GrX and GrY columns and enter the values you want to use for the ground truth columns
