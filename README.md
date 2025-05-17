@@ -6,6 +6,7 @@
 ## Files
 
 ### video_tagger.py
+![Video Tagger Screenshot](pictures/video_tagger.png)
 1. Populate the labels.csv with the labels you would like to use for tagging. One row = one label.
 2. Run the script:
     - `python3 video_tagger.py {path_to_video} {path_to_labels.csv} --output_csv {name_of_output.csv (optional)}`
@@ -17,6 +18,7 @@
     - Pixel Y Coordinate
 
 ### court_tagger.py
+![Court Tagger Screenshot](pictures/court_tagger.png)
 1. Run the script:
     - `python3 court_tagger.py {number_of_points} {path_to_video} --output_csv {name_of_output.csv (optional)}`
     - Alternatively, define the variables `VIDEO_PATH`, `NUM_POINTS` and `OUPTUT_CSV` and run `python3 court_tagger.py`
