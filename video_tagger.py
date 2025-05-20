@@ -7,6 +7,12 @@ from PIL import Image, ImageTk
 import argparse
 import sys
 
+# Define paths here
+VIDEO_PATH = "example/tennis_test.mp4"
+LABELS_CSV = "example/labels.csv"
+# By default, output csv is saved to the same path as the video + "_tagged.csv"
+OUTPUT_CSV = None
+
 class VideoTagger:
     def __init__(self, root, video_path, label_list, output_csv):
         self.root = root
@@ -247,7 +253,7 @@ class VideoTagger:
 
         print(f"Saved {len(self.clicked_points)} clicks to {self.output_csv}")
         self.root.destroy()
-
+        sys.exit(0)
 
 
 def load_labels(label_csv):
@@ -257,7 +263,6 @@ def load_labels(label_csv):
         for row in reader:
             labels.append(row["label"])
     return labels
-
 
 def main(video_path=None, labels_csv=None, output_csv=None):
     if video_path is None or labels_csv is None:
@@ -279,7 +284,6 @@ def main(video_path=None, labels_csv=None, output_csv=None):
     VideoTagger(root, video_path, labels, output_csv)
     root.mainloop()
 
-
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         parser = argparse.ArgumentParser(description="GUI tool for tagging video points")
@@ -290,8 +294,4 @@ if __name__ == "__main__":
         main(args.video_path, args.labels_csv, args.output_csv)
     else:
         # Define your paths here if you don't want to use command line
-        VIDEO_PATH = "example/tennis_test.mp4"
-        LABELS_CSV = "example/labels.csv"
-        # By default, output csv is saved to the same path as the video + "_tagged.csv"
-        OUTPUT_CSV = None
         main(VIDEO_PATH, LABELS_CSV, OUTPUT_CSV)

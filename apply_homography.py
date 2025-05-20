@@ -2,7 +2,12 @@ import pandas as pd
 import numpy as np
 import cv2
 import argparse
+import sys
 import os
+
+# Define paths here
+ORIGINAL_CSV = "example/tennis_test_tagged.csv"
+COURT_CSV = "example/tennis_test_calibration.csv"
 
 def apply_homography(original_csv, court_csv):
     # Load original and court-tagged points
@@ -25,13 +30,13 @@ def apply_homography(original_csv, court_csv):
 
     # Apply homography to each group of (x, y) columns
     for stem in stems:
-        x_col = stem + "_x"
-        y_col = stem + "_y"
+        x_col = stem + "x"
+        y_col = stem + "y"
         coords = original_df[[x_col, y_col]].values.astype(np.float32)
         coords = np.expand_dims(coords, axis=1)  # Shape: (N, 1, 2)
         projected = cv2.perspectiveTransform(coords, H).squeeze()  # Shape: (N, 2)
-        original_df[stem + "_x_meters"] = projected[:, 0]
-        original_df[stem + "_y_meters"] = projected[:, 1]
+        original_df[stem + "x_meters"] = projected[:, 0]
+        original_df[stem + "y_meters"] = projected[:, 1]
 
     # Output file path
     base = os.path.splitext(original_csv)[0]
@@ -39,13 +44,12 @@ def apply_homography(original_csv, court_csv):
     original_df.to_csv(output_csv, index=False)
     print(f"Saved transformed file to {output_csv}")
 
-def main():
-    parser = argparse.ArgumentParser(description="Apply homography transformation to coordinate CSV")
-    parser.add_argument("original_csv", type=str, help="Original CSV with _x and _y columns")
-    parser.add_argument("court_csv", type=str, help="CSV with court points (X, Y, GrX, GrY)")
-    args = parser.parse_args()
-
-    apply_homography(args.original_csv, args.court_csv)
-
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1:
+        parser = argparse.ArgumentParser(description="Apply homography transformation to coordinate CSV")
+        parser.add_argument("original_csv", type=str, help="Original CSV with _x and _y columns")
+        parser.add_argument("court_csv", type=str, help="CSV with court points (X, Y, GrX, GrY)")
+        args = parser.parse_args()
+        apply_homography(args.original_csv, args.court_csv)
+    else:
+        apply_homography(ORIGINAL_CSV, COURT_CSV)

@@ -7,6 +7,10 @@ import os
 import argparse
 import sys
 
+# Define paths here
+VIDEO_PATH = "example/tennis_test.mp4"
+NUM_POINTS = 4
+
 class CourtSelector:
     def __init__(self, video_path, num_points, output_csv):
         self.video_path = video_path
@@ -195,6 +199,7 @@ class CourtSelector:
                     f"Point{pt['index']}", pt["x"], pt["y"], pt["grx"], pt["gry"]
                 ])
         self.root.destroy()
+        sys.exit(0)
 
 def main(video_path=None, num_points=None, output_csv=None):
     if not video_path or not num_points:
@@ -204,7 +209,7 @@ def main(video_path=None, num_points=None, output_csv=None):
     if output_csv is None:
         base = os.path.splitext(os.path.basename(video_path))[0]
         folder = os.path.dirname(video_path)
-        output_csv = os.path.join(folder, base + "_calibrated.csv")
+        output_csv = os.path.join(folder, base + "_calibration.csv")
 
     CourtSelector(video_path, num_points, output_csv)
 
@@ -217,9 +222,5 @@ if __name__ == "__main__":
         args = parser.parse_args()
         main(args.video_path, args.num_points, args.output_csv)
     else:
-        # Define your paths here if you don't want to use command line
-        VIDEO_PATH = "example/tennis_test.mp4"
-        NUM_POINTS = 4
-        # By default, output csv is saved to the same path as the video + "_calibrated.csv"
         OUTPUT_CSV = None
         main(VIDEO_PATH, NUM_POINTS)
