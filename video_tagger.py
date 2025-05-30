@@ -243,15 +243,35 @@ class VideoTagger:
         # ensure directory exists
         os.makedirs(os.path.dirname(self.output_csv) or ".", exist_ok=True)
 
-        # write one final CSV with header + all clicks
+        # prepare data: frame → label → (x, y)
+        frame_dict = {}
+        for fr, lbl, x, y in self.clicked_points:
+            if fr not in frame_dict:
+                frame_dict[fr] = {}
+            frame_dict[fr][lbl] = (x, y)
+
+        # build header: frame, left_ankle_x, left_ankle_y, right_wrist_x, right_wrist_y, etc.
+        header = ["frame"]
+        for lbl in self.labels:
+            header.append(f"{lbl}_x")
+            header.append(f"{lbl}_y")
+
         with open(self.output_csv, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["frame", "label", "x", "y"])
-            # sort by frame then label for readability
-            for fr, lbl, x, y in sorted(self.clicked_points, key=lambda t: (t[0], t[1])):
-                writer.writerow([fr, lbl, x, y])
+            writer.writerow(header)
 
-        print(f"Saved {len(self.clicked_points)} clicks to {self.output_csv}")
+            for fr in sorted(frame_dict.keys()):
+                row = [fr]
+                label_dict = frame_dict[fr]
+                for lbl in self.labels:
+                    if lbl in label_dict:
+                        x, y = label_dict[lbl]
+                        row.extend([x, y])
+                    else:
+                        row.extend(["", ""])  # empty if not annotated
+                writer.writerow(row)
+
+        print(f"Saved {len(frame_dict)} frames to {self.output_csv}")
         self.root.destroy()
         sys.exit(0)
 
